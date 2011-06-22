@@ -1,6 +1,8 @@
+import MySQLdb
+import sys
+
 from fabric.api import *
 from pantheon import ygg
-import sys
 
 configuration = ygg.get_config()
 STORAGE = '/var/lib/jenkins/jobs/argus/workspace'
@@ -30,6 +32,62 @@ def _screenshot(p, e):
         fname = '{0}_{1}.png'.format(p, e)
         fpath = '{0}/{1}/{2}'.format(STORAGE, p, fname)
         local('xvfb-run --server-args="-screen 0, 640x480x24" python {0} --log="{1}" {2} > {3}'.format(WEBKIT2PNG, LOG, url, fpath))
+
+class MySQLConn(object):
+
+    def __init__(self,username='root',password='',database=None,cursor=None):
+        """Initialize generic MySQL connection object.
+        If no database is specified, makes a connection with no default db.
+
+        """
+        self.connection = self._mysql_connect(database, username, password)
+        self.cursor = self.connection.cursor(cursor)
+
+    def execute(self, query, fetchall=True, warn_only=False):
+        """Execute a command on the connection.
+
+        query: SQL statement.
+
+        """
+        try:
+            self.cursor.execute(query)
+            self.connection.commit()
+        except MySQLdb.Error, e:
+            self.connection.rollback()
+            print "MySQL Error %d: %s" % (e.args[0], e.args[1])
+            if not warn_only:
+                raise
+        except MySQLdb.Warning, w:
+            print "MySQL Warning: %s" % (w)
+        if fetchall:
+            return self.cursor.fetchall()
+        else:
+            return self.cursor.fetchone()
+
+    def close(self):
+        """Close database connection.
+
+        """
+        self.cursor.close()
+        self.connection.close()
+
+    def _mysql_connect(self, database, username, password):
+        """Return a MySQL connection object.
+
+        """
+        try:
+            conn = {'host': 'localhost',
+                    'user': username,
+                    'passwd': password}
+
+            if database:
+                conn.update({'db': database})
+
+            return MySQLdb.connect(**conn)
+
+        except MySQLdb.Error, e:
+            print "MySQL Error %d: %s" % (e.args[0], e.args[1])
+            raise
 
 if __name__ == '__main__':
     project = sys.argv[1] if len(sys.argv) >= 2 else None
