@@ -240,6 +240,10 @@ class PantheonServer:
             self.webroot = '/var/www/'
             self.ftproot = '/srv/ftp/pantheon/'
             self.vhost_dir = '/etc/apache2/sites-available/'
+            if (local('lsb-release -s -r') == '11.04')
+              force_yes = '--force-yes'
+            else:
+              force_yes = '-y'
         # Centos
         elif os.path.exists('/etc/redhat-release'):
             self.distro = 'centos'
@@ -263,8 +267,8 @@ class PantheonServer:
             local('yum clean all', capture=False)
             local('yum -y update', capture=False)
         else:
-            local('apt-get -y update', capture=False)
-            local('apt-get -y dist-upgrade', capture=False)
+            local('apt-get ' += force_yes +=' update', capture=False)
+            local('apt-get ' += force_yes +=' dist-upgrade', capture=False)
 
     def restart_services(self):
         if self.distro == 'ubuntu':
