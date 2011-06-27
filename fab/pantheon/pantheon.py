@@ -240,7 +240,7 @@ class PantheonServer:
             self.webroot = '/var/www/'
             self.ftproot = '/srv/ftp/pantheon/'
             self.vhost_dir = '/etc/apache2/sites-available/'
-            if (local('lsb-release -s -r') == '11.04')
+            if (local('lsb_release -s -r') == '11.04')
               force_yes = '--force-yes'
             else:
               force_yes = '-y'
